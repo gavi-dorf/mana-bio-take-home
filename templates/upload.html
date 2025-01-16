@@ -1,0 +1,17 @@
+{% from 'results_table.html' import results_table %}
+
+<!DOCTYPE html>
+<html>
+<body>
+    <a href="/">Back to home page</a>
+    <h1>Upload a new results file</h1>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" />
+        <button type="submit">Upload</button>
+    </form>
+    {% if error_message %}
+        <p>{{ error_message }}</p>
+    {% endif %}
+    {{ results_table(results) }}
+</body>
+</html>

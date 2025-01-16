@@ -56,8 +56,8 @@ def parse_tns_results(filename, upload_timestamp):
     if data[0][0] != "Instrument:":
         raise Exception("Invalid data format")
 
-    instrument_name = data[0][1]
-    if not instrument_name:
+    instrument = data[0][1]
+    if not instrument:
         raise Exception("Invalid data format")
 
     if any(data[0][2:] + data[1]):
@@ -86,13 +86,10 @@ def parse_tns_results(filename, upload_timestamp):
                 ("formulation_{}".format(formulation_count), value))
             formulation_count += 1
 
-    db_rows = []
-    for (formulation, result) in aggregated:
-        db_rows.append(("TNS", formulation, result, filename, str(upload_timestamp)))
-
     (connection, cursor) = connect_to_database()
-    cursor.executemany("INSERT INTO results(experiment_type, formulation_id, calculated_value, source, date_uploaded) VALUES(?, ?, ?, ?, ?)", db_rows)
+    cursor.executemany("INSERT INTO results(experiment_type, formulation_id, calculated_value) VALUES(\"TNS\", ?, ?)", aggregated)
     connection.commit()
+    cursor.connection.close()
 
     return aggregated
 
@@ -127,12 +124,9 @@ def parse_zeta_potential_results(filename, upload_timestamp):
     for formulation_id, calculated_value in as_tuples:
         if calculated_value < 0: raise Exception("Invalid data. Result values should all be positive, but result for {0} is {1}".format(formulation_id, calculated_value))
     
-    db_rows = []
-    for (formulation, result) in as_tuples:
-        db_rows.append(("ZETA_POTENTIAL", formulation, result, filename, str(upload_timestamp)))
-
     (connection, cursor) = connect_to_database()
-    cursor.executemany("INSERT INTO results(experiment_type, formulation_id, calculated_value, source, date_uploaded) VALUES(?, ?, ?, ?, ?)", db_rows)
+    cursor.executemany("INSERT INTO results(experiment_type, formulation_id, calculated_value) VALUES(\"ZETA_POTENTIAL\", ?, ?)", as_tuples)
     connection.commit()
+    cursor.connection.close()
 
-    return db_rows
+    return as_tuples

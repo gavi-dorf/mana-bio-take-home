@@ -1,0 +1,23 @@
+{% macro results_table(results) %}
+    {% if results %}
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                <th>formulation_id</th>
+                <th>calculated_value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in results %}
+            <tr>
+                {% for cell in row %}
+                <td>{{ cell }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No results available.</p>
+    {% endif %}
+{% endmacro %}

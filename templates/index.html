@@ -1,0 +1,17 @@
+{% from 'results_table.html' import results_table %}
+
+<!DOCTYPE html>
+<html>
+<body>
+    <a href="{{ url_for('upload_new_results') }}">Upload new results</a>
+    <form method="get" action="{{ url_for('index') }}">
+        <select name="experiment_type" onchange="this.form.submit()">
+            <option value="" disabled {{ 'selected' if not experiment_type }}>Select an experiment type</option>
+            {% for et in experiment_types %}
+                <option value="{{ et }}" {{ 'selected' if et == experiment_type else '' }}>{{ et }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    {{ results_table(results) }}
+</body>
+</html>
