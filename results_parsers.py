@@ -6,6 +6,7 @@ import statistics
 from datetime import datetime
 import sqlite3
 
+
 def parse_file(filename, upload_timestamp):
     type = None
     try:
@@ -39,35 +40,42 @@ TNS_SCHEMA = {
     "12": polars.datatypes.UInt64,
 }
 
-def connect_to_database(database_path = "results.db"):
+
+def connect_to_database(database_path="results.db"):
     connection = sqlite3.connect(database_path)
     cursor = connection.cursor()
-    return (connection, cursor) 
+    return (connection, cursor)
+
 
 def parse_tns_results(filename, upload_timestamp):
     wb = load_workbook(filename=filename)
     ws = wb.active
 
     if ws.dimensions != "A1:M11":
-        raise Exception("Invalid data format")
+        raise Exception(
+            "Invalid data format. The extent of occupied cells should be A1:M11"
+        )
 
     data = list(ws.values)
 
     if data[0][0] != "Instrument:":
-        raise Exception("Invalid data format")
+        raise Exception("Invalid data format. 'Instrument:' label is missing")
 
     instrument = data[0][1]
     if not instrument:
-        raise Exception("Invalid data format")
+        raise Exception("Invalid data format. Missing instrument name")
 
     if any(data[0][2:] + data[1]):
-        raise Exception("Invalid data format")
+        raise Exception(
+            "Invalid data format. Cells that should be empty aren't")
 
     if data[2][0] != "<>":
-        raise Exception("Invalid data format")
+        raise Exception(
+            "Invalid data format. Missing data start marker '<>' or it's not in the right place"
+        )
 
     if data[2] != TNS_HEADER:
-        raise Exception("Invalid data format")
+        raise Exception("Invalid data format. Missing header row")
 
     df = pl.DataFrame(data[3:], orient="row", schema=TNS_SCHEMA)
     # Because of the unusual geometry of the results table, the results are parsed by row
@@ -81,13 +89,17 @@ def parse_tns_results(filename, upload_timestamp):
             value = statistics.mean(
                 row[start_index:start_index + 3]) / control_value
             if value < 10:
-                raise Exception("Value is less than 10")
+                raise Exception(
+                    "Value {0} for formulation_{1} is less than 10".format(
+                        value, formulation_count))
             aggregated.append(
                 ("formulation_{}".format(formulation_count), value))
             formulation_count += 1
 
     (connection, cursor) = connect_to_database()
-    cursor.executemany("INSERT INTO results(experiment_type, formulation_id, calculated_value) VALUES(\"TNS\", ?, ?)", aggregated)
+    cursor.executemany(
+        "INSERT INTO results(experiment_type, formulation_id, calculated_value) VALUES(\"TNS\", ?, ?)",
+        aggregated)
     connection.commit()
     cursor.connection.close()
 
@@ -119,13 +131,19 @@ def parse_zeta_potential_results(filename, upload_timestamp):
         }).sort("formulation_id")
 
     as_dict = result.to_dict(as_series=False)
-    as_tuples = list(zip(as_dict["formulation_id"], as_dict["calculated_value"]))
+    as_tuples = list(
+        zip(as_dict["formulation_id"], as_dict["calculated_value"]))
     # Print the result
     for formulation_id, calculated_value in as_tuples:
-        if calculated_value < 0: raise Exception("Invalid data. Result values should all be positive, but result for {0} is {1}".format(formulation_id, calculated_value))
-    
+        if calculated_value < 0:
+            raise Exception(
+                "Invalid data. Result values should all be positive, but result for {0} is {1}"
+                .format(formulation_id, calculated_value))
+
     (connection, cursor) = connect_to_database()
-    cursor.executemany("INSERT INTO results(experiment_type, formulation_id, calculated_value) VALUES(\"ZETA_POTENTIAL\", ?, ?)", as_tuples)
+    cursor.executemany(
+        "INSERT INTO results(experiment_type, formulation_id, calculated_value) VALUES(\"ZETA_POTENTIAL\", ?, ?)",
+        as_tuples)
     connection.commit()
     cursor.connection.close()
 
