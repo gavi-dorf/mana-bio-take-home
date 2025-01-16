@@ -5,6 +5,7 @@ import results_parsers
 import uuid
 from datetime import datetime
 import database_helpers
+import polars as pl
 
 template_dir = os.path.abspath('templates')
 app = Flask(__name__, template_folder=template_dir)
@@ -37,11 +38,26 @@ def index():
     # Always close the database connection
     cursor.connection.close()
 
+    df = pl.DataFrame(filtered_results, orient="row", schema=["formulation_id", "calculated_value"])
+
+    calculated_value = df.select(pl.col("calculated_value"))
+    mean = calculated_value.mean().item()
+    median = calculated_value.median().item()
+    standard_deviation = calculated_value.std().item()
+
+
+    print(mean, median, standard_deviation)
+
     return render_template(
         "index.html",
         experiment_types=experiment_types,
         experiment_type=experiment_type,
         results=filtered_results,
+        summary_stats={
+            "mean": mean,
+            "median": median,
+            "standard_deviation": standard_deviation
+        }
     )
 
 

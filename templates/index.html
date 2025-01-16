@@ -12,6 +12,14 @@
             {% endfor %}
         </select>
     </form>
+    {% if results and summary_stats %}
+        Overall statistics: 
+        <ul>
+        {% for stat in summary_stats.keys() %}
+            <li> {{ stat }}: {{ summary_stats[stat] }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
     {{ results_table(results) }}
 </body>
 </html>
