@@ -1,8 +1,10 @@
 # Setup
 1. Install uv (See instructions here: https://github.com/astral-sh/uv)
 2. `cd` into the project directory for this repo
-3. Run `uv sync`
-4. Run `uv run .` to start the webserver on port 5000
+3. Run `uv venv`
+4. Run `source .venv/bin/activate` to enter the virtual environment shell 
+5. Run `uv sync`
+6. Run `uv run app` to start the webserver on port 5000
 
 # Usage
 ## Uploading New Results (/upload-new-results endpoint)
