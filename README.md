@@ -1,0 +1,19 @@
+# Setup
+1. Install uv (See instructions here: https://github.com/astral-sh/uv)
+2. `cd` into the project directory for this repo
+3. Run `uv sync`
+4. Run `uv run .` to start the webserver on port 5000
+
+# Usage
+## Uploading New Results (/upload-new-results endpoint)
+1. Upload a results file
+2. Validate the data:
+If errors are found, an error message will be displayed
+If no errors are found:
+1. The results are stored in the database
+2. The newly uploaded results are displayed
+## Exploring Stored Results 
+1. Access the index page ("/") which will show all stored results, grouped by experiment type.
+2. Select an experiment type to view:
+- Overall statistics: median, average, and standard deviation.
+- A table of results with columns: formulation_id and calculated_value.

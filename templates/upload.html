@@ -10,7 +10,7 @@
         <button type="submit">Upload</button>
     </form>
     {% if error_message %}
-        <p>{{ error_message }}</p>
+        <p>ERROR: {{ error_message }}</p>
     {% endif %}
     {{ results_table(results) }}
 </body>
