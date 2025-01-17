@@ -4,7 +4,7 @@
 3. Run `uv venv`
 4. Run `source .venv/bin/activate` to enter the virtual environment shell 
 5. Run `uv sync`
-6. Run `uv run .` to start the webserver on port 5000
+6. Run `uv run app` to start the webserver on port 5000
 
 # Usage
 ## Uploading New Results (/upload-new-results endpoint)
