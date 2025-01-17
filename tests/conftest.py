@@ -36,6 +36,5 @@ def sample_copies_dir(tmp_path, request):
     from_samples = os.path.join(test_dir, "samples")
     to_samples = tmp_path / "samples"
     shutil.copytree(from_samples, to_samples)
-    print(from_samples, to_samples)
     yield to_samples
 

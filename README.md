@@ -5,6 +5,12 @@
 4. Run `source .venv/bin/activate` to enter the virtual environment shell 
 5. Run `uv sync`
 6. Run `uv run main.py` to start the webserver on port 5000
+# Testing
+1. `cd` into the project directory for this repo
+2. Run `uv venv`
+3. Run `source .venv/bin/activate` to enter the virtual environment shell 
+4. Run `uv sync`
+5. Run `uv run pytest -s` to run the test suite
 
 # Usage
 ## Uploading New Results (/upload-new-results endpoint)

@@ -100,9 +100,6 @@ def index() -> str:
     median: float = calculated_value.median().item() if len(df) > 0 else 0.0
     standard_deviation: float = calculated_value.std().item() if len(df) > 0 else 0.0
 
-    # For debugging purposes
-    print(f"Summary Stats - Mean: {mean}, Median: {median}, StdDev: {standard_deviation}")
-
     return render_template(
         "index.html",
         experiment_types=experiment_types,
