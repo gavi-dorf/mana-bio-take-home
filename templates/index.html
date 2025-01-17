@@ -4,22 +4,31 @@
 <html>
 <body>
     <a href="{{ url_for('upload_new_results') }}">Upload new results</a>
-    <form method="get" action="{{ url_for('index') }}">
-        <select name="experiment_type" onchange="this.form.submit()">
-            <option value="" disabled {{ 'selected' if not experiment_type }}>Select an experiment type</option>
-            {% for et in experiment_types %}
-                <option value="{{ et }}" {{ 'selected' if et == experiment_type else '' }}>{{ et }}</option>
-            {% endfor %}
-        </select>
-    </form>
+
+    {% if experiment_types and experiment_types|length > 0 %}
+        <form method="get" action="{{ url_for('index') }}">
+            <select name="experiment_type" onchange="this.form.submit()">
+                <option value="" disabled {{ 'selected' if not experiment_type }}>Select an experiment type</option>
+                {% for et in experiment_types %}
+                    <option value="{{ et }}" {{ 'selected' if et == experiment_type else '' }}>
+                        {{ et }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    {% else %}
+        <p>No experiment types available to display. Please upload data</p>
+    {% endif %}
+
     {% if results and summary_stats %}
-        Overall statistics: 
+        <p>Overall statistics:</p>
         <ul>
         {% for stat in summary_stats.keys() %}
-            <li> {{ stat }}: {{ summary_stats[stat] }}</li>
+            <li>{{ stat }}: {{ summary_stats[stat] }}</li>
         {% endfor %}
         </ul>
     {% endif %}
+    
     {{ results_table(results) }}
 </body>
 </html>
