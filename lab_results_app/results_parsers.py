@@ -25,11 +25,11 @@ import statistics
 from datetime import datetime
 from typing import Tuple, List
 
-import database_helpers
+from . import database_helpers
 
+class ResultsParsingError(Exception): pass
 
-
-def parse_file(filename: str, upload_timestamp: datetime) -> List[Tuple[str, float]]:
+def parse_file(filename: str) -> List[Tuple[str, float]]:
     """
     Determines the type of result file and routes it to the appropriate parser.
 
@@ -39,13 +39,12 @@ def parse_file(filename: str, upload_timestamp: datetime) -> List[Tuple[str, flo
 
     Args:
         filename: Path to the result file to be parsed
-        upload_timestamp: When the file was uploaded to the system
 
     Returns:
         List of tuples containing (formulation_id, calculated_value)
 
     Raises:
-        Exception: If the file type cannot be determined
+        ResultsParsingError: If the file type cannot be determined
         UnicodeDecodeError: If the file cannot be read as text
     """
     type = None
@@ -57,10 +56,10 @@ def parse_file(filename: str, upload_timestamp: datetime) -> List[Tuple[str, flo
         type = "TNS"
     
     if type == "TNS":
-        return parse_tns_results(filename, upload_timestamp)
+        return parse_tns_results(filename)
     if type == "ZETA_POTENTIAL":
-        return parse_zeta_potential_results(filename, upload_timestamp)
-    raise Exception("Could not determine filetype!")
+        return parse_zeta_potential_results(filename)
+    raise ResultsParsingError("Could not determine filetype!")
 
 
 # Constants defining the expected structure of TNS result files
@@ -82,7 +81,7 @@ TNS_SCHEMA = {
     "12": polars.datatypes.UInt64,
 }
 
-def parse_tns_results(filename: str, upload_timestamp: datetime) -> List[Tuple[str, float]]:
+def parse_tns_results(filename: str) -> List[Tuple[str, float]]:
     """
     Parses TNS (Transfection Normalized to Standard) results from an Excel file.
 
@@ -96,20 +95,19 @@ def parse_tns_results(filename: str, upload_timestamp: datetime) -> List[Tuple[s
 
     Args:
         filename: Path to the Excel file containing TNS results
-        upload_timestamp: When the file was uploaded to the system
 
     Returns:
         List of tuples containing (formulation_id, calculated_value)
 
     Raises:
-        Exception: If the file format is invalid or if calculated values are below threshold
+        ResultsParsingError: If the file format is invalid or if calculated values are below threshold
     """
     wb = load_workbook(filename=filename)
     ws = wb.active
 
     # Validate worksheet dimensions
     if ws.dimensions != "A1:M11":
-        raise Exception(
+        raise ResultsParsingError(
             "Invalid data format. The extent of occupied cells should be A1:M11"
         )
 
@@ -117,25 +115,25 @@ def parse_tns_results(filename: str, upload_timestamp: datetime) -> List[Tuple[s
 
     # Validate instrument information
     if data[0][0] != "Instrument:":
-        raise Exception("Invalid data format. 'Instrument:' label is missing")
+        raise ResultsParsingError("Invalid data format. 'Instrument:' label is missing")
 
     instrument = data[0][1]
     if not instrument:
-        raise Exception("Invalid data format. Missing instrument name")
+        raise ResultsParsingError("Invalid data format. Missing instrument name")
 
     # Validate empty cells
     if any(data[0][2:] + data[1]):
-        raise Exception(
+        raise ResultsParsingError(
             "Invalid data format. Cells that should be empty aren't")
 
     # Validate data header
     if data[2][0] != "<>":
-        raise Exception(
+        raise ResultsParsingError(
             "Invalid data format. Missing data start marker '<>' or it's not in the right place"
         )
 
     if data[2] != TNS_HEADER:
-        raise Exception("Invalid data format. Missing header row")
+        raise ResultsParsingError("Invalid data format. Missing header row")
 
     # Convert to polars DataFrame for processing
     df = pl.DataFrame(data[3:], orient="row", schema=TNS_SCHEMA)
@@ -156,7 +154,7 @@ def parse_tns_results(filename: str, upload_timestamp: datetime) -> List[Tuple[s
             
             # Validate calculated value
             if value < 10:
-                raise Exception(
+                raise ResultsParsingError(
                     "Value {0} for formulation_{1} is less than 10".format(
                         value, formulation_count))
             
@@ -175,7 +173,7 @@ def parse_tns_results(filename: str, upload_timestamp: datetime) -> List[Tuple[s
     return aggregated
 
 
-def parse_zeta_potential_results(filename: str, upload_timestamp: datetime) -> List[Tuple[str, float]]:
+def parse_zeta_potential_results(filename: str) -> List[Tuple[str, float]]:
     """
     Parses Zeta Potential results from a CSV file.
 
@@ -187,13 +185,12 @@ def parse_zeta_potential_results(filename: str, upload_timestamp: datetime) -> L
 
     Args:
         filename: Path to the CSV file containing Zeta Potential results
-        upload_timestamp: When the file was uploaded to the system
 
     Returns:
         List of tuples containing (formulation_id, calculated_value)
 
     Raises:
-        Exception: If measurement counts are incorrect or if normalized values are negative
+        ResultsParsingError: If measurement counts are incorrect or if normalized values are negative
     """
     # Read and preprocess CSV data
     df = pl.read_csv(filename).select(
@@ -214,7 +211,7 @@ def parse_zeta_potential_results(filename: str, upload_timestamp: datetime) -> L
     for (formulation_name, formulation_count
          ) in grouped_by_sample_name.len().sort("Sample Name").iter_rows():
         if formulation_count != 3:
-            raise Exception("Expected 3 values for {0}, got {1}".format(
+            raise ResultsParsingError("Expected 3 values for {0}, got {1}".format(
                 formulation_name, formulation_count))
 
     # Calculate normalized results
@@ -234,7 +231,7 @@ def parse_zeta_potential_results(filename: str, upload_timestamp: datetime) -> L
     # Validate results
     for formulation_id, calculated_value in as_tuples:
         if calculated_value < 0:
-            raise Exception(
+            raise ResultsParsingError(
                 "Invalid data. Result values should all be positive, but result for {0} is {1}"
                 .format(formulation_id, calculated_value))
 

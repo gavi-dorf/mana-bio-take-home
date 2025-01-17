@@ -24,13 +24,14 @@ Dependencies:
 from flask import Flask, render_template, request
 import os
 import os.path
-import results_parsers
 import uuid
 from datetime import datetime
-import database_helpers
 import polars as pl
 from typing import List, Tuple, Dict, Optional
 from pathlib import Path
+
+from . import results_parsers
+from . import database_helpers
 
 # Configure application paths
 template_dir: Path = Path('templates').absolute()
@@ -151,8 +152,7 @@ def upload_new_results() -> str:
                 # Save and process file
                 file.save(filepath)
                 results = results_parsers.parse_file(
-                    filepath,
-                    upload_timestamp
+                    filepath
                 )
             except Exception as e:
                 error_message = f"Error processing file: {str(e)}"
@@ -177,7 +177,7 @@ def run() -> None:
     3. Starts Flask development server
     """
     # Verify database connection works
-    connection, cursor = database_helpers.connect_to_database()
+    _, cursor = database_helpers.connect_to_database()
     cursor.connection.close()
     
     # Ensure upload directory exists
@@ -185,6 +185,3 @@ def run() -> None:
     
     # Start development server
     app.run(debug=True)
-
-if __name__ == "__main__":
-    run()

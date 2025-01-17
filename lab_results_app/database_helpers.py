@@ -16,12 +16,16 @@ Dependencies:
 """
 
 import sqlite3
-from typing import Tuple, Optional
+import os
+
+from typing import Tuple
 from sqlite3 import Connection, Cursor
 
-def connect_to_database(db: str = "results.db") -> Tuple[Connection, Cursor]:
+def connect_to_database() -> Tuple[Connection, Cursor]:
     """
     Establishes a connection to an SQLite database and initializes the results table.
+
+    Databse path is fetched from LAB_APP_DB_PATH, defaulting to "results.db"
 
     This function performs the following operations:
     1. Creates a new SQLite database connection (or connects to existing database)
@@ -29,10 +33,6 @@ def connect_to_database(db: str = "results.db") -> Tuple[Connection, Cursor]:
     3. Initializes a 'results' table if it doesn't exist
     4. Commits the table creation
     5. Returns the connection and cursor objects
-
-    Args:
-        db: A string representing the database file path. Defaults to "results.db".
-            If the database doesn't exist, it will be created.
 
     Returns:
         A tuple containing:
@@ -49,11 +49,13 @@ def connect_to_database(db: str = "results.db") -> Tuple[Connection, Cursor]:
         sqlite3.Error: If there are issues connecting to the database or creating the table
         
     Example:
-        >>> conn, cur = connect_to_database("test.db")
+        >>> conn, cur = connect_to_database()
         >>> cur.execute("SELECT * FROM results")
         >>> results = cur.fetchall()
         >>> conn.close()
     """
+    db = os.environ.get("LAB_APP_DB_PATH", "results.db")
+
     # Establish connection to the SQLite database
     connection: Connection = sqlite3.connect(db)
     

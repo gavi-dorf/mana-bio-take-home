@@ -12,4 +12,3 @@ wheels/
 *.db
 file_uploads/
 .sesskey
-samples/
